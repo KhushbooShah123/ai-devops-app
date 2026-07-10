@@ -10,7 +10,7 @@ SCAN_TIME = Counter('ai_worker_scan_time_seconds', 'Time taken to scan')
 
 @app.route('/')
 def home():
-    return jsonify({"service": "AI-DevOps-Worker", "status": "Running", "version": "v1"})
+    return jsonify({"service": "AI-DevOps-Worker", "status": "Running", "version": "v2-ci-cd-success"})
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_repo():
