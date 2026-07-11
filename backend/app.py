@@ -6,8 +6,14 @@ app = Flask(__name__)
 
 # Prometheus metrics (Real monitoring data)
 REQUEST_COUNT = Counter('ai_worker_requests_total', 'Total AI Worker Requests')
-SCAN_TIME = Counter('ai_worker_scan_time_seconds', 'Time taken to scan')
+from prometheus_client import Histogram
 
+SCAN_TIME = Histogram(
+    "ai_worker_scan_time_seconds",
+    "Time taken for scanning"
+)
+with SCAN_TIME.time():
+    # scan code
 @app.route('/')
 def home():
     return jsonify({"service": "AI-DevOps-Worker", "status": "Running", "version": "v2-ci-cd-success"})
