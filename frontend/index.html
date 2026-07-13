@@ -2,75 +2,138 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI DevOps Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khushboo's AI DevOps Platform</title>
     <style>
-        body { font-family: Arial; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 600px; }
-        h1 { color: #326ce5; margin-bottom: 10px; }
-        .status-box { margin-top: 20px; padding: 15px; background: #e6ffe6; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32; font-weight: bold; text-align: left; display: none; padding: 20px; margin-top: 20px; }
-        
-        .fix-box { margin-top: 15px; padding: 15px; background: #e3f2fd; border: 1px solid #326ce5; border-radius: 5px; color: #326ce5; text-align: left; display: none; padding: 20px; margin-top: 10px; }
-        
-        button { margin-top: 20px; padding: 12px 24px; background: #326ce5; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background: #245ec2; }
-        button.fix-btn { background: #FF9800; }
-        
-        .loader { display: none; margin-top: 15px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1f2937; text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 30px; }
+        input { flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 16px; }
+        button { padding: 10px 20px; background-color: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .card { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; text-align: center; }
+        .score { font-size: 32px; font-weight: bold; color: #059669; }
+        .label { font-size: 14px; color: #6b7280; margin-top: 5px; }
+        .fix-btn { width: 100%; margin-top: 20px; background-color: #7c3aed; font-size: 18px; padding: 15px; }
+        .fix-btn:hover { background-color: #6d28d9; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; color: #2563eb; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h1>🚀 Khushboo's AI DevOps Platform</h1>
-    <p>Infrastructure Status: <span id="infra-status">Checking...</span></p>
+    <h1>🚀 AI DevOps Analytics</h1>
     
-    <div id="loader" class="loader">🔄 Deploying... Please wait...</div>
-
-    <div id="status-box" class="status-box">
-        <div id="backend-data">Waiting for data...</div>
+    <div class="input-group">
+        <input type="text" id="repoUrl" placeholder="Enter GitHub Repository URL (e.g., https://github.com/user/repo)">
+        <button id="analyzeBtn" onclick="analyzeRepo()">Analyze Repo</button>
     </div>
 
-    <div id="fix-box" class="fix-box">
-        <div id="fix-status"></div>
-    </div>
+    <div id="status"></div>
 
-    <button class="fix-btn" onclick="triggerAnalysis()">Analyze Repo (Mock Data)</button>
+    <div id="dashboard" class="dashboard hidden">
+        <div class="card">
+            <div class="score" id="dockerScore">0</div>
+            <div class="label">Docker Score</div>
+        </div>
+        <div class="card">
+            <div class="score" id="k8sScore">0</div>
+            <div class="label">Kubernetes Score</div>
+        </div>
+        <div class="card">
+            <div class="score" id="cicdScore">0</div>
+            <div class="label">CI/CD Score</div>
+        </div>
+        <div class="card">
+            <div class="score" id="secScore">0</div>
+            <div class="label">Security Score</div>
+        </div>
+        <div class="card" style="grid-column: span 2; background: #e0f2fe; border-color: #0284c7;">
+            <div class="score" id="overallScore" style="color: #0369a1;">0</div>
+            <div class="label">Overall Production Readiness</div>
+        </div>
+
+        <button class="fix-btn" id="fixBtn" onclick="fixWithAI()">🪄 Fix with AI</button>
+    </div>
 </div>
 
 <script>
-    const AI_WORKER_URL = 'http://ai-worker-service:5000';
+    let currentRepoUrl = '';
 
-    async function triggerAnalysis() {
-        document.getElementById('infra-status').innerText = "Analyzing repo with AI...";
-        document.getElementById('status-box').style.display = 'block';
-        document.getElementById('backend-data').innerText = "Connecting to AI Worker...";
+    async function analyzeRepo() {
+        const repoUrl = document.getElementById('repoUrl').value;
+        if (!repoUrl) return alert("Please enter a URL");
+
+        currentRepoUrl = repoUrl;
+        const btn = document.getElementById('analyzeBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.innerText = "Scanning...";
+        status.innerText = "Connecting to AI Worker...";
 
         try {
-            // 1. Trigger Analysis
-            const analyzeRes = await fetch(`${AI_WORKER_URL}/api/analyze`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ repo_url: "https://github.com/KhushbooShah123/ai-devops-app" })
+            // ALB Ingress magic: '/api' will automatically route to backend-service:5000
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo_url: repoUrl })
             });
-            const data = analyzeRes.json();
+
+            const result = await response.json();
             
-            document.getElementById('backend-data').innerHTML = `
-                <b>Repo:</b> ${data.data.repo_url} <br>
-                <b>Overall Score:</b> <span style="font-size: 1.2em; color: green;">${data.data.scores.overall_production_readiness}%</span>
-            `;
-            document.getElementById('infra-status').innerText = "✅ Analyzed Successfully!";
-
-            // 2. Trigger Fix with AI (Non-blocking)
-            document.getElementById('fix-status').innerText = "🤖 Generating AI Fix... (Check logs for output)";
-            fetch(`${AI_WORKER_URL}/api/fix`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            }); 
-
+            if(result.data) {
+                status.innerText = `✅ Analysis Complete! (Source: ${result.source})`;
+                status.style.color = "green";
+                
+                document.getElementById('dockerScore').innerText = result.data.scores.docker_score;
+                document.getElementById('k8sScore').innerText = result.data.scores.kubernetes_score;
+                document.getElementById('cicdScore').innerText = result.data.scores.ci_cd_score;
+                document.getElementById('secScore').innerText = result.data.scores.security_score;
+                document.getElementById('overallScore').innerText = result.data.scores.overall_production_readiness;
+                
+                document.getElementById('dashboard').classList.remove('hidden');
+            }
         } catch (error) {
-            document.getElementById('infra-status').innerText = "❌ AI Worker Unreachable";
-            document.getElementById('backend-data').innerText = "Failed to connect. Is ArgoCD syncing?"
+            status.innerText = "❌ Error connecting to backend. Is ALB URL correct?";
+            status.style.color = "red";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Analyze Repo";
+        }
+    }
+
+    async function fixWithAI() {
+        const btn = document.getElementById('fixBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.innerText = "Sending to AI Queue...";
+        status.innerText = "Triggering background worker...";
+
+        try {
+            const response = await fetch('/api/fix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo_url: currentRepoUrl })
+            });
+
+            const result = await response.json();
+            status.innerText = `✅ ${result.message} (Task ID: ${result.task_id})`;
+            status.style.color = "blue";
+        } catch (error) {
+            status.innerText = "❌ Failed to trigger AI fix.";
+            status.style.color = "red";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "🪄 Fix with AI";
         }
     }
 </script>
+
 </body>
 </html>
